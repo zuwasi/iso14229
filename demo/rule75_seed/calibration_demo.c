@@ -14,8 +14,8 @@ static uint32_t demo_mask_applied;
 void demo_seed_call_sites(void)
 {
     /* Call sites match the same violation classes as the #defines. */
-    demo_trim = INT32_C(-25);
-    demo_mask_applied = (uint32_t)UINT32_C(0xFFUL);
+    demo_trim = (-INT32_C(25));
+    demo_mask_applied = (uint32_t)UINT32_C(0xFF);
 }
 
 int32_t demo_get_trim(void)

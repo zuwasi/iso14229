@@ -23,14 +23,19 @@
 #define DEMO_SAMPLE_RATE   UINT32_C(100)
 #define DEMO_TIMEOUT_MS    UINT64_C(5000)
 
-/* --- Excluded: signed minimum must never be auto-fixed (expert case) --- */
-#define DEMO_INT32_MIN_SENTINEL INT32_C(-2147483648)
+/* --- Excluded from automation, fixed by expert decision (compliant forms) --- */
+#define DEMO_INT32_MIN_SENTINEL ((-INT32_C(2147483647))-1)
 
-/* --- Manual-review class: non-literal argument (never auto-fixed) --- */
-#define DEMO_DERIVED_GAIN  INT32_C(DEMO_TEMP_OFFSET)
+/* --- Manual-review class: non-literal argument, fixed by expert decision --- */
+#define DEMO_DERIVED_GAIN  DEMO_TEMP_OFFSET
 
 /* --- Compliant reference forms (the fix targets these shapes) --- */
 #define DEMO_TEMP_OFFSET_OK   (-INT32_C(40))
 #define DEMO_MASK_OK          UINT32_C(0xFF)
+
+/* Declarations for the demo translation unit (Rule 8.4). */
+void demo_seed_call_sites(void);
+int32_t demo_get_trim(void);
+uint32_t demo_get_mask(void);
 
 #endif /* DEMO_CALIBRATION_CONSTANTS_H */

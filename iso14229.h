@@ -619,7 +619,25 @@ UDSErr_t UDSTpPoll(UDSTp_t *hdl);   ///< call this at <5ms intervals
  * @brief used to enforce runtime invariants within iso14229
  */
 #ifndef UDS_ASSERT
-#define UDS_ASSERT(x) assert(x)
+#ifndef UDS_AssertFail
+/**
+ * @brief Assertion failure hook.
+ * The default implementation spins forever; override it (or define
+ * UDS_AssertFail yourself before including this header) with your own
+ * fault handler, e.g. one that records the fault and resets.
+ */
+static void UDS_AssertFail(void) {
+    for (;;) {
+        // spin: replaced by the application fault handler in production
+    }
+}
+#endif
+#define UDS_ASSERT(x)                                                                                                          \
+    do {                                                                                                                       \
+        if (!(x)) {                                                                                                            \
+            UDS_AssertFail();                                                                                                  \
+        }                                                                                                                      \
+    } while (0)
 #endif
 
 /**

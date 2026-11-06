@@ -223,7 +223,7 @@ static uint32_t UnpackBEu32(const uint8_t *src, size_t n) {
  * @return UDS_OK if successful
  */
 static uint16_t UnpackBEu16(const uint8_t *src) {
-    UDS_ASSERT(src);
+    UDS_ASSERT(src != 0);
     return (uint16_t)((uint16_t)(src[0] << 8U) | (uint16_t)src[1]);
 }
 
@@ -600,7 +600,7 @@ static UDSErr_t PollLowLevel(UDSClient_t *client) {
     if ((NULL == client) || (NULL == client->tp) || (NULL == client->tp->poll)) {
         return UDS_ERR_MISUSE;
     }
-    UDS_ASSERT(client);
+    UDS_ASSERT(client != 0);
     UDS_ASSERT(client->tp);
     UDS_ASSERT(client->tp->poll);
 
@@ -620,7 +620,7 @@ static UDSErr_t PollLowLevel(UDSClient_t *client) {
     case STATE_AWAIT_RESPONSE:
         return Handle_AWAIT_RESPONSE(client);
     default:
-        UDS_ASSERT(false);
+        UDS_ASSERT(false != 0);
         return UDS_FAIL;
     }
 }
@@ -999,7 +999,7 @@ UDSErr_t UDSSendRequestFileTransfer(UDSClient_t *client, const uint8_t mode, con
         break;
     }
     default:
-        UDS_ASSERT(false);
+        UDS_ASSERT(false != 0);
         break;
     }
     // Phew!
@@ -1692,9 +1692,9 @@ static UDSErr_t Handle_0x22_ReadDataByIdentifier(UDSServer_t *srv, UDSReq_t *r) 
  */
 static UDSErr_t decodeAddressAndLengthAt(UDSReq_t *r, uint8_t *const buf, uintptr_t *memoryAddress,
                                          size_t *memorySize, size_t offset) {
-    UDS_ASSERT(r);
-    UDS_ASSERT(memoryAddress);
-    UDS_ASSERT(memorySize);
+    UDS_ASSERT(r != 0);
+    UDS_ASSERT(memoryAddress != 0);
+    UDS_ASSERT(memorySize != 0);
     *memoryAddress = 0;
     *memorySize = 0;
 
@@ -2098,7 +2098,7 @@ static UDSErr_t Handle_0x31_RoutineControl(UDSServer_t *srv, UDSReq_t *r) {
 }
 
 static void ResetTransfer(UDSServer_t *srv) {
-    UDS_ASSERT(srv);
+    UDS_ASSERT(srv != 0);
     srv->xferBlockSequenceCounter = 1;
     srv->xferByteCounter = 0;
     srv->xferTotalBytes = 0;
@@ -2106,7 +2106,7 @@ static void ResetTransfer(UDSServer_t *srv) {
 }
 
 static void BeginTransfer(UDSServer_t *srv, size_t xferTotalBytes, size_t xferBlockLength) {
-    UDS_ASSERT(srv);
+    UDS_ASSERT(srv != 0);
     srv->xferBlockSequenceCounter = 1;
     srv->xferByteCounter = 0;
     srv->xferTotalBytes = xferTotalBytes;
@@ -2674,7 +2674,7 @@ static UDSErr_t evaluateServiceResponse(UDSServer_t *srv, UDSReq_t *r) {
     case UDS_SID_TESTER_PRESENT:
     case UDS_SID_CONTROL_DTC_SETTING:
     case UDS_SID_LINK_CONTROL: {
-        UDS_ASSERT(service);
+        UDS_ASSERT(service != 0);
         response = service(srv, r);
 
         bool suppressPosRspMsgIndicationBit = (r->recv_buf[1] & 0x80U) != 0U;
@@ -2701,7 +2701,7 @@ static UDSErr_t evaluateServiceResponse(UDSServer_t *srv, UDSReq_t *r) {
     case UDS_SID_TRANSFER_DATA:
     case UDS_SID_REQUEST_FILE_TRANSFER:
     case UDS_SID_REQUEST_TRANSFER_EXIT: {
-        UDS_ASSERT(service);
+        UDS_ASSERT(service != 0);
         response = service(srv, r);
         break;
     }
@@ -2763,7 +2763,7 @@ static UDSErr_t evaluateServiceResponse(UDSServer_t *srv, UDSReq_t *r) {
         suppressResponse = true;
     }
 
-    if (suppressResponse) {
+    if (suppressResponse != 0) {
         NoResponse(r);
     } else { /* send negative or positive response */
     }
@@ -2882,22 +2882,22 @@ void UDSServerPoll(UDSServer_t *srv) {
 
 
 UDSErr_t UDSTpSend(UDSTp_t *hdl, const uint8_t *buf, const size_t len, const UDSSDU_t *info) {
-    UDS_ASSERT(hdl);
+    UDS_ASSERT(hdl != 0);
     UDS_ASSERT(hdl->send);
-    UDS_ASSERT(buf);
+    UDS_ASSERT(buf != 0);
     return hdl->send(hdl, buf, len, info);
 }
 
 UDSErr_t UDSTpRecv(UDSTp_t *hdl, uint8_t *buf, const size_t bufsiz, size_t *recvlen,
                    UDSSDU_t *info) {
-    UDS_ASSERT(hdl);
+    UDS_ASSERT(hdl != 0);
     UDS_ASSERT(hdl->recv);
-    UDS_ASSERT(recvlen);
+    UDS_ASSERT(recvlen != 0);
     return hdl->recv(hdl, buf, bufsiz, recvlen, info);
 }
 
 UDSErr_t UDSTpPoll(UDSTp_t *hdl) {
-    UDS_ASSERT(hdl);
+    UDS_ASSERT(hdl != 0);
     UDS_ASSERT(hdl->poll);
     return hdl->poll(hdl);
 }
@@ -3385,7 +3385,7 @@ __attribute__((format(printf, 1, 2))) void isotp_user_debug(const char *message,
 int32_t isotp_user_send_can(const uint32_t arbitration_id, const uint8_t *data, const uint8_t size,
                         void *user_data) {
     (void)fflush(stdout);
-    UDS_ASSERT(user_data);
+    UDS_ASSERT(user_data != 0);
     int32_t sockfd = 0;
     (void)memcpy(&sockfd, user_data, sizeof(sockfd));
     struct can_frame frame = {0};
@@ -3401,7 +3401,7 @@ int32_t isotp_user_send_can(const uint32_t arbitration_id, const uint8_t *data, 
 }
 
 static bool GetNextFrame(int32_t fd, struct can_frame *frame) {
-    UDS_ASSERT(frame);
+    UDS_ASSERT(frame != 0);
     ssize_t nbytes = read(fd, frame, sizeof(struct can_frame));
     if (nbytes < 0) {
         if ((EAGAIN == errno) || (EWOULDBLOCK == errno)) {
@@ -3418,7 +3418,7 @@ static bool GetNextFrame(int32_t fd, struct can_frame *frame) {
 }
 
 static void SocketCANRecv(UDSTpISOTpCSocketCAN_t *tp) {
-    UDS_ASSERT(tp);
+    UDS_ASSERT(tp != 0);
     struct can_frame frame = {0};
 
     while (GetNextFrame(tp->fd, &frame)) {
@@ -3481,7 +3481,7 @@ UDSErr_t UDSClientTpISOTpCSocketCANInit(UDSTpISOTpCSocketCAN_t *tp, const char *
 }
 
 void UDSTpISOTpCSocketCANDeinit(UDSTpISOTpCSocketCAN_t *tp) {
-    UDS_ASSERT(tp);
+    UDS_ASSERT(tp != 0);
     if (close(tp->fd) < 0) {
         perror("close");
     }
@@ -3676,7 +3676,7 @@ static int32_t LinuxSockBind(const char *if_name, uint32_t rxid, uint32_t txid, 
     struct can_isotp_options opts;
     (void)memset(&opts, 0, sizeof(opts));
 
-    if (functional) {
+    if (functional != 0) {
         // configure the socket as listen-only to avoid sending FC frames
         opts.flags |= CAN_ISOTP_LISTEN_MODE;
     }
@@ -3716,7 +3716,7 @@ fail:
 
 UDSErr_t UDSServerTpIsoTpSockInit(UDSTpIsoTpSock_t *tp, const char *ifname, uint32_t source_addr,
                                   uint32_t target_addr, uint32_t source_addr_func) {
-    UDS_ASSERT(tp);
+    UDS_ASSERT(tp != 0);
     (void)memset(tp, 0, sizeof(*tp));
     tp->hdl.send = isotp_sock_tp_send;
     tp->hdl.recv = isotp_sock_tp_recv;
@@ -3743,7 +3743,7 @@ UDSErr_t UDSServerTpIsoTpSockInit(UDSTpIsoTpSock_t *tp, const char *ifname, uint
 
 UDSErr_t UDSClientTpIsoTpSockInit(UDSTpIsoTpSock_t *tp, const char *ifname, uint32_t source_addr,
                                   uint32_t target_addr, uint32_t target_addr_func) {
-    UDS_ASSERT(tp);
+    UDS_ASSERT(tp != 0);
     (void)memset(tp, 0, sizeof(*tp));
     tp->hdl.send = isotp_sock_tp_send;
     tp->hdl.recv = isotp_sock_tp_recv;
@@ -3858,7 +3858,7 @@ static void NetworkPoll(void) {
 
 static UDSErr_t mock_tp_send(struct UDSTp *hdl, const uint8_t *buf, size_t len,
                              const UDSSDU_t *info) {
-    UDS_ASSERT(hdl);
+    UDS_ASSERT(hdl != 0);
     ISOTPMock_t *tp = (ISOTPMock_t *)hdl; // cppcheck-suppress [misra-c2012-11.3]
     if (MsgCount >= NUM_MSGS) {
         UDS_LOGW(__FILE__, "mock_tp_send: too many messages in the queue");
@@ -3902,7 +3902,7 @@ static UDSErr_t mock_tp_send(struct UDSTp *hdl, const uint8_t *buf, size_t len,
 
 static UDSErr_t mock_tp_recv(struct UDSTp *hdl, uint8_t *buf, size_t bufsiz, size_t *recvlen,
                              UDSSDU_t *info) {
-    UDS_ASSERT(hdl);
+    UDS_ASSERT(hdl != 0);
     ISOTPMock_t *tp = (ISOTPMock_t *)hdl; // cppcheck-suppress [misra-c2012-11.3]
     if (tp->recv_len == 0U) {
         return UDS_OK;
@@ -3927,8 +3927,8 @@ static UDSErr_t mock_tp_poll(struct UDSTp *hdl) {
 }
 
 static void ISOTPMockAttach(ISOTPMock_t *tp, const ISOTPMockArgs_t *args) {
-    UDS_ASSERT(tp);
-    UDS_ASSERT(args);
+    UDS_ASSERT(tp != 0);
+    UDS_ASSERT(args != 0);
     UDS_ASSERT(TPCount < MAX_NUM_TP);
     TPCount++;
     tp->hdl.send = mock_tp_send;
@@ -3943,7 +3943,7 @@ static void ISOTPMockAttach(ISOTPMock_t *tp, const ISOTPMockArgs_t *args) {
 }
 
 static void ISOTPMockDetach(ISOTPMock_t *tp) {
-    UDS_ASSERT(tp);
+    UDS_ASSERT(tp != 0);
     for (uint32_t i = 0; i < MAX_NUM_TP; i++) {
         if (&TPs[i] == tp) {
             TPCount--;
@@ -3951,7 +3951,7 @@ static void ISOTPMockDetach(ISOTPMock_t *tp) {
             return;
         }
     }
-    UDS_ASSERT(false);
+    UDS_ASSERT(false != 0);
 }
 
 UDSTp_t *ISOTPMockNew(const char *name, const ISOTPMockArgs_t *args) {
@@ -3968,7 +3968,7 @@ UDSTp_t *ISOTPMockNew(const char *name, const ISOTPMockArgs_t *args) {
     } while (i < MAX_NUM_TP);
     UDS_ASSERT(i != MAX_NUM_TP);
     ISOTPMock_t *tp = &TPs[i];
-    UDS_ASSERT(tp);
+    UDS_ASSERT(tp != 0);
     (void)memset(tp, 0, sizeof(ISOTPMock_t));
     if (name != NULL) {
         if (snprintf(tp->name, sizeof(tp->name), "%s", name) >= (int32_t)sizeof(tp->name)) {
@@ -4015,7 +4015,7 @@ void ISOTPMockReset(void) {
 }
 
 void ISOTPMockFree(UDSTp_t *tp) {
-    UDS_ASSERT(tp);
+    UDS_ASSERT(tp != 0);
     UDS_ASSERT(0 != memcmp(tp, ZeroTestBlock, sizeof(ISOTPMock_t)));
     ISOTPMock_t *tpm = (ISOTPMock_t *)tp; // cppcheck-suppress [misra-c2012-11.3]
     ISOTPMockDetach(tpm);
@@ -4420,7 +4420,7 @@ static int32_t isotp_receive_first_frame(IsoTpLink* link, IsoTpCanMessage* messa
 #endif
 
     /* copying data */
-    if (is_long_packet) {
+    if (is_long_packet != 0) {
         first_frame_data = message->as.first_frame_long.data;
     } else {
         first_frame_data = message->as.first_frame_short.data;

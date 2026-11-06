@@ -615,7 +615,7 @@ UDSErr_t UDSTpPoll(UDSTp_t *hdl);   ///< call this at <5ms intervals
 
 
 /**
- * @def UDS_ASSERT(x)
+ * @def UDS_ASSERT(x != 0)
  * @brief used to enforce runtime invariants within iso14229
  */
 #ifndef UDS_ASSERT

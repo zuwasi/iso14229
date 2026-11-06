@@ -594,7 +594,7 @@ typedef struct UDSTp {
      * @brief status flag (read-only)
      */
     struct {
-        unsigned is_sending : 1; // set when data transmission starts in send(); cleared when done.
+        uint32_t is_sending : 1; // set when data transmission starts in send(); cleared when done.
     } status;
 } UDSTp_t;
 
@@ -679,7 +679,7 @@ const char *UDSEventToStr(UDSEvent_t evt);
 #define UDS_LOG_VERBOSE 5U /**< Log verbose, debug, info, warnings, and errors */
 /** @} */
 
-typedef unsigned int UDS_LogLevel_t; ///< one of @ref uds_log_level_
+typedef uint32_t UDS_LogLevel_t; ///< one of @ref uds_log_level_
 
 static_assert((bool)((UDS_LOG_LEVEL == UDS_LOG_NONE) || (UDS_LOG_LEVEL == UDS_LOG_ERROR) ||
                      (UDS_LOG_LEVEL == UDS_LOG_WARN) || (UDS_LOG_LEVEL == UDS_LOG_INFO) ||
@@ -771,11 +771,11 @@ static inline void UDS_LogSDUDummy(UDS_LogLevel_t level, const char *tag, const 
 typedef struct UDSClient {
     // User-facing configuration options
     UDSTp_t *tp; /**< transport layer handle */
-    int (*fn)(struct UDSClient *client, UDSEvent_t evt, void *ev_data); /**< callback function */
+    int32_t (*fn)(struct UDSClient *client, UDSEvent_t evt, void *ev_data); /**< callback function */
     void *fn_data;                      /**< user-specified function data */
-    unsigned cfg_suppress_pos_resp : 1; /**< suppress positive responses from the server  */
-    unsigned cfg_send_functional : 1;   /**< send functional (broadcast) requests */
-    unsigned cfg_ignore_srv_sess_timing
+    uint32_t cfg_suppress_pos_resp : 1; /**< suppress positive responses from the server  */
+    uint32_t cfg_send_functional : 1;   /**< send functional (broadcast) requests */
+    uint32_t cfg_ignore_srv_sess_timing
         : 1; /**< do not heed the P2 and P2* timings sent by the server  */
     uint8_t cfg_data_format_identifier;     /**< 0x38 RequestFileTransfer dataFormatIdentifier */
     uint8_t cfg_file_size_parameter_length; /**< 0x38 RequestFileTransfer fileSizeParameterLength */
@@ -1896,7 +1896,7 @@ void isotp_user_debug(const char* message, ...);
  *                           Consecutive Frame should be retried.
  * @retval ISOTP_RET_ERROR The frame could not be submitted.
  */
-int isotp_user_send_can(const uint32_t arbitration_id, const uint8_t* data, const uint8_t size
+int32_t isotp_user_send_can(const uint32_t arbitration_id, const uint8_t* data, const uint8_t size
 #ifdef ISO_TP_USER_SEND_CAN_FLAGS
                         , const uint8_t flags
 #endif
@@ -2011,7 +2011,7 @@ typedef struct IsoTpLink {
     uint32_t            receive_timer_cr;
     /** @endcond */
     /** Result of the current or most recent receive operation. */
-    int                 receive_protocol_result;
+    int32_t                 receive_protocol_result;
     /** Current IsoTpReceiveStatusTypes value. Prefer isotp_receive() to consume completed data. */
     uint8_t             receive_status;
     /** @cond ISOTP_INTERNAL */
@@ -2088,7 +2088,7 @@ void isotp_init_link(IsoTpLink* link, uint32_t sendid, uint8_t* sendbuf, uint32_
  * @note RX_DL is learned independently from each incoming First Frame.
  * @example isotp_example_can_fd.c
  */
-int isotp_set_tx_dl(IsoTpLink* link, uint8_t tx_dl);
+int32_t isotp_set_tx_dl(IsoTpLink* link, uint8_t tx_dl);
 
 /**
  * @brief Return the effective transmit data length for a link.
@@ -2157,7 +2157,7 @@ void isotp_on_can_message(IsoTpLink* link, const uint8_t* data, uint8_t len);
  *          no longer ISOTP_SEND_STATUS_INPROGRESS, then inspect
  *          send_protocol_result.
  */
-int isotp_send(IsoTpLink* link, const uint8_t payload[], uint32_t size);
+int32_t isotp_send(IsoTpLink* link, const uint8_t payload[], uint32_t size);
 
 /**
  * @brief Start transmitting with a one-time CAN identifier override.
@@ -2177,7 +2177,7 @@ int isotp_send(IsoTpLink* link, const uint8_t payload[], uint32_t size);
  * @retval ISOTP_RET_INPROGRESS Another segmented transmission is active.
  * @return Any other value returned by isotp_user_send_can().
  */
-int isotp_send_with_id(IsoTpLink* link, uint32_t id, const uint8_t payload[], uint32_t size);
+int32_t isotp_send_with_id(IsoTpLink* link, uint32_t id, const uint8_t payload[], uint32_t size);
 
 /**
  * @brief Copy and consume one completed, non-streaming message.
@@ -2194,7 +2194,7 @@ int isotp_send_with_id(IsoTpLink* link, uint32_t id, const uint8_t payload[], ui
  * @retval ISOTP_RET_ERROR Streaming reception is active, or a receive callback
  *                         is registered in a build that supports callbacks.
  */
-int isotp_receive(IsoTpLink* link, uint8_t* payload, const uint32_t payload_size, uint32_t* out_size);
+int32_t isotp_receive(IsoTpLink* link, uint8_t* payload, const uint32_t payload_size, uint32_t* out_size);
 
 #ifdef ISO_TP_ENABLE_STREAMING
 /**
@@ -2216,7 +2216,7 @@ int isotp_receive(IsoTpLink* link, uint8_t* payload, const uint32_t payload_size
  * @retval ISOTP_RET_ERROR Any required pointer is NULL.
  * @example isotp_example_streaming.c
  */
-int isotp_receive_streaming(IsoTpLink* link, uint8_t* payload, const uint32_t payload_size, uint32_t* out_size, bool* is_complete);
+int32_t isotp_receive_streaming(IsoTpLink* link, uint8_t* payload, const uint32_t payload_size, uint32_t* out_size, bool* is_complete);
 #endif
 
 #ifdef ISO_TP_TRANSMIT_COMPLETE_CALLBACK
@@ -2339,7 +2339,7 @@ UDSErr_t UDSTpISOTpCPoll(UDSTp_t *tp);
 typedef struct {
     /// \cond DOXYGEN_SHOULD_SKIP_THIS
     UDSTpISOTpC_t hdl2;
-    int fd;
+    int32_t fd;
     char tag[16];
     /// \endcond
 } UDSTpISOTpCSocketCAN_t;
@@ -2391,8 +2391,8 @@ typedef struct {
     uint8_t send_buf[UDS_ISOTP_MTU];
     size_t recv_len;
     UDSSDU_t recv_info;
-    int phys_fd;
-    int func_fd;
+    int32_t phys_fd;
+    int32_t func_fd;
     uint32_t phys_sa;
     uint32_t phys_ta;
     uint32_t func_sa;

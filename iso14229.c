@@ -2919,12 +2919,12 @@ uint32_t UDSMillis(void) {
 #if UDS_SYS == UDS_SYS_UNIX
     struct timeval te;
     gettimeofday(&te, NULL);
-    long long milliseconds = (te.tv_sec * 1000LL) + (te.tv_usec / 1000);
+    int64_t milliseconds = (te.tv_sec * 1000LL) + (te.tv_usec / 1000);
     return (uint32_t)milliseconds;
 #elif UDS_SYS == UDS_SYS_WINDOWS
     struct timespec ts;
     timespec_get(&ts, TIME_UTC);
-    long long milliseconds = ts.tv_sec * 1000LL + ts.tv_nsec / 1000000;
+    int64_t milliseconds = ts.tv_sec * 1000LL + ts.tv_nsec / 1000000;
     return (uint32_t)milliseconds;
 #elif UDS_SYS == UDS_SYS_ARDUINO
     return millis();
@@ -3221,7 +3221,7 @@ static UDSErr_t tp_send(UDSTp_t *hdl, const uint8_t *buf, size_t len, const UDSS
         return UDS_ERR_MISUSE;
     }
 
-    int ret = isotp_send(link, buf, (uint32_t)len);
+    int32_t ret = isotp_send(link, buf, (uint32_t)len);
     switch (ret) {
     case ISOTP_RET_OK: {
         return UDS_OK;
@@ -3236,7 +3236,7 @@ static UDSErr_t tp_send(UDSTp_t *hdl, const uint8_t *buf, size_t len, const UDSS
 static inline UDSErr_t
 safe_api_shim_isotp_receive(IsoTpLink *link, uint8_t *payload,
                             const size_t payload_size, // size of payload buffer
-                            size_t *out_size, int *isotp_ret) {
+                            size_t *out_size, int32_t *isotp_ret) {
     uint32_t u32out_size = 0;
 
     if (payload_size > UINT32_MAX) { // max value of isotp_receive(payload_size)
@@ -3258,7 +3258,7 @@ safe_api_shim_isotp_receive(IsoTpLink *link, uint8_t *payload,
 static UDSErr_t tp_recv(UDSTp_t *hdl, uint8_t *buf, size_t bufsiz, size_t *recvlen,
                         UDSSDU_t *info) {
     UDSTpISOTpC_t *tp = (UDSTpISOTpC_t *)hdl; // cppcheck-suppress [misra-c2012-11.3]
-    int ret = 0;
+    int32_t ret = 0;
     UDSErr_t err = UDS_OK;
 
     err = safe_api_shim_isotp_receive(&tp->phys_link, buf, bufsiz, recvlen, &ret);
@@ -3340,10 +3340,10 @@ UDSErr_t UDSClientTpISOTpCInit(UDSTpISOTpC_t *tp, uint32_t source_addr, uint32_t
 
 
 
-static int SetupSocketCAN(const char *ifname) {
+static int32_t SetupSocketCAN(const char *ifname) {
     struct sockaddr_can addr = {0};
     struct ifreq ifr = {0};
-    int sockfd = socket(PF_CAN, SOCK_RAW | SOCK_NONBLOCK, CAN_RAW);
+    int32_t sockfd = socket(PF_CAN, SOCK_RAW | SOCK_NONBLOCK, CAN_RAW);
 
     if (sockfd < 0) {
         perror("socket");
@@ -3351,7 +3351,7 @@ static int SetupSocketCAN(const char *ifname) {
     }
 
     (void)memset(&ifr, 0, sizeof(ifr));
-    if (snprintf(ifr.ifr_name, sizeof(ifr.ifr_name), "%s", ifname) >= (int)sizeof(ifr.ifr_name)) {
+    if (snprintf(ifr.ifr_name, sizeof(ifr.ifr_name), "%s", ifname) >= (int32_t)sizeof(ifr.ifr_name)) {
         UDS_LOGE(__FILE__, "Interface name too long");
         if (close(sockfd) < 0) {
             perror("close");
@@ -3382,11 +3382,11 @@ __attribute__((format(printf, 1, 2))) void isotp_user_debug(const char *message,
 #ifndef ISO_TP_USER_SEND_CAN_ARG
 #error "ISO_TP_USER_SEND_CAN_ARG must be defined"
 #endif
-int isotp_user_send_can(const uint32_t arbitration_id, const uint8_t *data, const uint8_t size,
+int32_t isotp_user_send_can(const uint32_t arbitration_id, const uint8_t *data, const uint8_t size,
                         void *user_data) {
     (void)fflush(stdout);
     UDS_ASSERT(user_data);
-    int sockfd = 0;
+    int32_t sockfd = 0;
     (void)memcpy(&sockfd, user_data, sizeof(sockfd));
     struct can_frame frame = {0};
     frame.can_id = arbitration_id;
@@ -3400,7 +3400,7 @@ int isotp_user_send_can(const uint32_t arbitration_id, const uint8_t *data, cons
     return ISOTP_RET_OK;
 }
 
-static bool GetNextFrame(int fd, struct can_frame *frame) {
+static bool GetNextFrame(int32_t fd, struct can_frame *frame) {
     UDS_ASSERT(frame);
     ssize_t nbytes = read(fd, frame, sizeof(struct can_frame));
     if (nbytes < 0) {
@@ -3500,15 +3500,15 @@ void UDSTpISOTpCSocketCANDeinit(UDSTpISOTpCSocketCAN_t *tp) {
 
 
 
-static bool revents_has(short revents, short flag) {
-    return (bool)(((unsigned int)revents & (unsigned int)flag) != 0U);
+static bool revents_has(int16_t revents, int16_t flag) {
+    return (bool)(((uint32_t)revents & (uint32_t)flag) != 0U);
 }
 
 static UDSErr_t isotp_sock_tp_poll(UDSTp_t *hdl) {
     const UDSTpIsoTpSock_t *impl = (UDSTpIsoTpSock_t *)hdl; // cppcheck-suppress [misra-c2012-11.3]
     UDSErr_t err = UDS_OK;
-    int ret = 0;
-    const int fds[2] = {impl->phys_fd, impl->func_fd};
+    int32_t ret = 0;
+    const int32_t fds[2] = {impl->phys_fd, impl->func_fd};
     struct pollfd pfds[2] = {0};
     pfds[0].fd = impl->phys_fd;
     pfds[0].events = POLLERR | POLLOUT;
@@ -3526,12 +3526,12 @@ static UDSErr_t isotp_sock_tp_poll(UDSTp_t *hdl) {
         ; // timeout, no events
     } else {
         // poll() returned with events
-        for (int i = 0; i < 2; i++) {
+        for (int32_t i = 0; i < 2; i++) {
             struct pollfd pfd = pfds[i];
 
             // Check for errors
             if (revents_has(pfd.revents, POLLERR)) {
-                int pending_err = 0;
+                int32_t pending_err = 0;
                 socklen_t len = sizeof(pending_err);
                 if (0 == getsockopt(fds[i], SOL_SOCKET, SO_ERROR, &pending_err, &len) &&
                     pending_err) {
@@ -3565,7 +3565,7 @@ static UDSErr_t isotp_sock_tp_poll(UDSTp_t *hdl) {
     return err;
 }
 
-static UDSErr_t tp_recv_once(int fd, uint8_t *buf, const size_t bufsiz, size_t *recvlen) {
+static UDSErr_t tp_recv_once(int32_t fd, uint8_t *buf, const size_t bufsiz, size_t *recvlen) {
     UDSErr_t err = UDS_OK;
     ssize_t ret = read(fd, buf, bufsiz);
     if (ret < 0) {
@@ -3623,7 +3623,7 @@ static UDSErr_t isotp_sock_tp_send(UDSTp_t *hdl, const uint8_t *buf, const size_
                                    const UDSSDU_t *info) {
     UDSTpIsoTpSock_t *impl = (UDSTpIsoTpSock_t *)hdl; // cppcheck-suppress [misra-c2012-11.3]
     ssize_t ret = -1;
-    int fd = -1;
+    int32_t fd = -1;
     const UDS_A_TA_Type_t ta_type = info ? info->A_TA_Type : UDS_A_TA_TYPE_PHYSICAL;
 
     switch (ta_type) {
@@ -3656,8 +3656,8 @@ static UDSErr_t isotp_sock_tp_send(UDSTp_t *hdl, const uint8_t *buf, const size_
     return UDS_OK;
 }
 
-static int LinuxSockBind(const char *if_name, uint32_t rxid, uint32_t txid, bool functional) {
-    int fd = socket(AF_CAN, SOCK_DGRAM | SOCK_NONBLOCK, CAN_ISOTP);
+static int32_t LinuxSockBind(const char *if_name, uint32_t rxid, uint32_t txid, bool functional) {
+    int32_t fd = socket(AF_CAN, SOCK_DGRAM | SOCK_NONBLOCK, CAN_ISOTP);
     if (fd < 0) {
         perror("Socket");
         return -1;
@@ -3688,7 +3688,7 @@ static int LinuxSockBind(const char *if_name, uint32_t rxid, uint32_t txid, bool
 
     struct ifreq ifr;
     (void)memset(&ifr, 0, sizeof(ifr));
-    if (snprintf(ifr.ifr_name, sizeof(ifr.ifr_name), "%s", if_name) >= (int)sizeof(ifr.ifr_name)) {
+    if (snprintf(ifr.ifr_name, sizeof(ifr.ifr_name), "%s", if_name) >= (int32_t)sizeof(ifr.ifr_name)) {
         UDS_LOGE(__FILE__, "Interface name too long");
         goto fail;
     }
@@ -3799,7 +3799,7 @@ void UDSTpIsoTpSockDeinit(const UDSTpIsoTpSock_t *tp) {
 #define NUM_MSGS 8U
 static ISOTPMock_t TPs[MAX_NUM_TP];
 static const char ZeroTestBlock[sizeof(ISOTPMock_t)] = {0};
-static unsigned TPCount = 0;
+static uint32_t TPCount = 0;
 static FILE *LogFile = NULL;
 static struct Msg {
     uint8_t buf[UDS_ISOTP_MTU];
@@ -3808,14 +3808,14 @@ static struct Msg {
     uint32_t scheduled_tx_time;
     ISOTPMock_t *sender;
 } msgs[NUM_MSGS];
-static unsigned MsgCount = 0;
+static uint32_t MsgCount = 0;
 
 static void NetworkPoll(void) {
-    unsigned i = 0;
+    uint32_t i = 0;
     while (i < MsgCount) {
         if (UDSTimeAfter(UDSMillis(), msgs[i].scheduled_tx_time)) {
             bool found = false;
-            for (unsigned j = 0; j < MAX_NUM_TP; j++) {
+            for (uint32_t j = 0; j < MAX_NUM_TP; j++) {
                 ISOTPMock_t *tp = &TPs[j];
                 if (0 == memcmp(tp, ZeroTestBlock, sizeof(ISOTPMock_t))) {
                     continue; // slot not in use
@@ -3846,7 +3846,7 @@ static void NetworkPoll(void) {
                 UDS_LOGW(__FILE__, "TPMock: no matching receiver for message");
             }
 
-            for (unsigned j = i + 1U; j < MsgCount; j++) {
+            for (uint32_t j = i + 1U; j < MsgCount; j++) {
                 msgs[j - 1U] = msgs[j];
             }
             MsgCount--;
@@ -3944,7 +3944,7 @@ static void ISOTPMockAttach(ISOTPMock_t *tp, const ISOTPMockArgs_t *args) {
 
 static void ISOTPMockDetach(ISOTPMock_t *tp) {
     UDS_ASSERT(tp);
-    for (unsigned i = 0; i < MAX_NUM_TP; i++) {
+    for (uint32_t i = 0; i < MAX_NUM_TP; i++) {
         if (&TPs[i] == tp) {
             TPCount--;
             UDS_LOGV(__FILE__, "TPMock: detached %s. TPCount: %d", tp->name, TPCount);
@@ -3971,7 +3971,7 @@ UDSTp_t *ISOTPMockNew(const char *name, const ISOTPMockArgs_t *args) {
     UDS_ASSERT(tp);
     (void)memset(tp, 0, sizeof(ISOTPMock_t));
     if (name != NULL) {
-        if (snprintf(tp->name, sizeof(tp->name), "%s", name) >= (int)sizeof(tp->name)) {
+        if (snprintf(tp->name, sizeof(tp->name), "%s", name) >= (int32_t)sizeof(tp->name)) {
             UDS_LOGE(__FILE__, "Transport name too long, truncated");
         }
     } else {
@@ -4171,10 +4171,10 @@ static uint32_t isotp_st_min_to_us(uint8_t st_min) {
     return 0;
 }
 
-static int isotp_send_flow_control(const IsoTpLink* link, uint8_t flow_status, uint8_t block_size, uint32_t st_min_us) {
+static int32_t isotp_send_flow_control(const IsoTpLink* link, uint8_t flow_status, uint8_t block_size, uint32_t st_min_us) {
     IsoTpCanMessage message;
     (void)memset(&message, 0, sizeof(message));
-    int             ret;
+    int32_t             ret;
     uint8_t         size = 0;
 
     /* setup message  */
@@ -4198,9 +4198,9 @@ static int isotp_send_flow_control(const IsoTpLink* link, uint8_t flow_status, u
     return ret;
 }
 
-static int isotp_send_single_frame(const IsoTpLink* link, uint32_t id) {
+static int32_t isotp_send_single_frame(const IsoTpLink* link, uint32_t id) {
     IsoTpCanMessage message;
-    int             ret;
+    int32_t             ret;
     uint8_t         size = 0;
 
     (void)memset(&message, 0, sizeof(message));
@@ -4238,9 +4238,9 @@ static int isotp_send_single_frame(const IsoTpLink* link, uint32_t id) {
 
     return ret;
 }
-static int isotp_send_first_frame(IsoTpLink* link, uint32_t id) {
+static int32_t isotp_send_first_frame(IsoTpLink* link, uint32_t id) {
     IsoTpCanMessage message;
-    int             ret   = 0;
+    int32_t             ret   = 0;
     const uint8_t   tx_dl = isotp_tx_dl(link);
     uint32_t        data_length;
 
@@ -4284,11 +4284,11 @@ static int isotp_send_first_frame(IsoTpLink* link, uint32_t id) {
     return ret;
 }
 
-static int isotp_send_consecutive_frame(IsoTpLink* link) {
+static int32_t isotp_send_consecutive_frame(IsoTpLink* link) {
     IsoTpCanMessage message;
     uint32_t        data_length;
     uint32_t        max_data_length;
-    int             ret;
+    int32_t             ret;
     uint8_t         size = 0;
 
     (void)memset(&message, 0, sizeof(message));
@@ -4324,7 +4324,7 @@ static int isotp_send_consecutive_frame(IsoTpLink* link) {
     return ret;
 }
 
-static int isotp_receive_single_frame(IsoTpLink* link, const IsoTpCanMessage* message, uint8_t len) {
+static int32_t isotp_receive_single_frame(IsoTpLink* link, const IsoTpCanMessage* message, uint8_t len) {
     const uint8_t* payload;
     uint32_t       payload_length;
     uint32_t       max_payload_length;
@@ -4370,7 +4370,7 @@ static int isotp_receive_single_frame(IsoTpLink* link, const IsoTpCanMessage* me
     return ISOTP_RET_OK;
 }
 
-static int isotp_receive_first_frame(IsoTpLink* link, IsoTpCanMessage* message, uint8_t len) {
+static int32_t isotp_receive_first_frame(IsoTpLink* link, IsoTpCanMessage* message, uint8_t len) {
     const uint8_t* first_frame_data;
     uint8_t        is_long_packet = 0;
     uint32_t       first_frame_data_length;
@@ -4448,7 +4448,7 @@ static int isotp_receive_first_frame(IsoTpLink* link, IsoTpCanMessage* message, 
     return ISOTP_RET_OK;
 }
 
-static int isotp_receive_consecutive_frame(IsoTpLink* link, const IsoTpCanMessage* message, uint8_t len) {
+static int32_t isotp_receive_consecutive_frame(IsoTpLink* link, const IsoTpCanMessage* message, uint8_t len) {
     uint32_t remaining_bytes;
     uint32_t max_data_length;
 
@@ -4491,7 +4491,7 @@ static int isotp_receive_consecutive_frame(IsoTpLink* link, const IsoTpCanMessag
     return ISOTP_RET_OK;
 }
 
-static int isotp_receive_flow_control_frame(IsoTpLink* link, IsoTpCanMessage* message, uint8_t len) {
+static int32_t isotp_receive_flow_control_frame(IsoTpLink* link, IsoTpCanMessage* message, uint8_t len) {
     /* unused args */
     (void)link;
     (void)message;
@@ -4509,10 +4509,10 @@ static int isotp_receive_flow_control_frame(IsoTpLink* link, IsoTpCanMessage* me
 ///                 PUBLIC FUNCTIONS                ///
 ///////////////////////////////////////////////////////
 
-int isotp_send(IsoTpLink* link, const uint8_t payload[], uint32_t size) { return isotp_send_with_id(link, link->send_arbitration_id, payload, size); }
+int32_t isotp_send(IsoTpLink* link, const uint8_t payload[], uint32_t size) { return isotp_send_with_id(link, link->send_arbitration_id, payload, size); }
 
-int isotp_send_with_id(IsoTpLink* link, uint32_t id, const uint8_t payload[], uint32_t size) {
-    int ret;
+int32_t isotp_send_with_id(IsoTpLink* link, uint32_t id, const uint8_t payload[], uint32_t size) {
+    int32_t ret;
 
     if (link == 0x0) {
         isotp_user_debug("Link is null!");
@@ -4524,8 +4524,8 @@ int isotp_send_with_id(IsoTpLink* link, uint32_t id, const uint8_t payload[], ui
 
 #ifndef ISO_TP_NO_FORMATTED_ERRORS
         char    message[ISOTP_MAX_ERROR_MSG_SIZE] = {0};
-        int32_t writtenChars = ISOTP_SNPRINTF(&message[0], ISOTP_MAX_ERROR_MSG_SIZE, "Attempted to send %u bytes; max size is %u!\n", (unsigned int)size,
-                                        (unsigned int)link->send_buf_size);
+        int32_t writtenChars = ISOTP_SNPRINTF(&message[0], ISOTP_MAX_ERROR_MSG_SIZE, "Attempted to send %u bytes; max size is %u!\n", (uint32_t)size,
+                                        (uint32_t)link->send_buf_size);
 
         assert(writtenChars <= ISOTP_MAX_ERROR_MSG_SIZE);
         (void)writtenChars;
@@ -4572,7 +4572,7 @@ int isotp_send_with_id(IsoTpLink* link, uint32_t id, const uint8_t payload[], ui
 
 void isotp_on_can_message(IsoTpLink* link, const uint8_t* data, uint8_t len) {
     IsoTpCanMessage message;
-    int             ret;
+    int32_t             ret;
 
     if (len < 2 || len > ISO_TP_MAX_CAN_FRAME_SIZE) { return; }
 
@@ -4747,7 +4747,7 @@ void isotp_on_can_message(IsoTpLink* link, const uint8_t* data, uint8_t len) {
     return;
 }
 
-int isotp_receive(IsoTpLink* link, uint8_t* payload, const uint32_t payload_size, uint32_t* out_size) {
+int32_t isotp_receive(IsoTpLink* link, uint8_t* payload, const uint32_t payload_size, uint32_t* out_size) {
     uint32_t copylen;
 
 #ifdef ISO_TP_RECEIVE_COMPLETE_CALLBACK
@@ -4773,7 +4773,7 @@ int isotp_receive(IsoTpLink* link, uint8_t* payload, const uint32_t payload_size
 }
 
 #ifdef ISO_TP_ENABLE_STREAMING
-int isotp_receive_streaming(IsoTpLink* link, uint8_t* payload, const uint32_t payload_size, uint32_t* out_size, bool* is_complete) {
+int32_t isotp_receive_streaming(IsoTpLink* link, uint8_t* payload, const uint32_t payload_size, uint32_t* out_size, bool* is_complete) {
     uint32_t copylen;
 
     if (link == NULL || payload == NULL || out_size == NULL || is_complete == NULL) { return ISOTP_RET_ERROR; }
@@ -4842,7 +4842,7 @@ void isotp_init_link(IsoTpLink* link, uint32_t sendid, uint8_t* sendbuf, uint32_
     return;
 }
 
-int isotp_set_tx_dl(IsoTpLink* link, uint8_t tx_dl) {
+int32_t isotp_set_tx_dl(IsoTpLink* link, uint8_t tx_dl) {
     if (link == NULL) {
         isotp_user_debug("Link is null!");
         return ISOTP_RET_ERROR;
@@ -4853,7 +4853,7 @@ int isotp_set_tx_dl(IsoTpLink* link, uint8_t tx_dl) {
         char    message[ISOTP_MAX_ERROR_MSG_SIZE] = {0};
         int32_t writtenChars =
             ISOTP_SNPRINTF(&message[0], ISOTP_MAX_ERROR_MSG_SIZE, "Invalid TX_DL of %u bytes; must be a CAN frame length between 8 and %u!\n",
-                     (unsigned int)tx_dl, (unsigned int)ISO_TP_MAX_CAN_FRAME_SIZE);
+                     (uint32_t)tx_dl, (uint32_t)ISO_TP_MAX_CAN_FRAME_SIZE);
 
         assert(writtenChars <= ISOTP_MAX_ERROR_MSG_SIZE);
         (void)writtenChars;
@@ -4903,7 +4903,7 @@ void isotp_destroy_link(IsoTpLink* link) {
 }
 
 void isotp_poll(IsoTpLink* link) {
-    int ret;
+    int32_t ret;
 
     /* only polling when operation in progress */
     if (ISOTP_SEND_STATUS_INPROGRESS == link->send_status) {
